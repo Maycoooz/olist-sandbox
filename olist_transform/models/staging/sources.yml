@@ -1,0 +1,16 @@
+version: 2
+
+sources:
+  - name: olist_raw
+    database: olist-498903
+    schema: olist_raw
+    tables:
+      - name: public_customers
+      - name: public_geolocation
+      - name: public_order_items
+      - name: public_order_payments
+      - name: public_order_reviews
+      - name: public_orders
+      - name: public_product_category_name_translation
+      - name: public_products
+      - name: public_sellers

@@ -1,0 +1,240 @@
+version: 2
+
+models:
+  - name: stg_customers
+    description: Cleaned customer records with standardized zip codes.
+    columns:
+      - name: customer_id
+        description: Unique key connecting a customer to their order.
+        tests:
+          - not_null
+          - unique
+      - name: customer_unique_id
+        description: Identifies the actual customer across multiple orders.
+        tests:
+          - not_null
+      - name: zip_code
+        description: 5-digit zip code prefix, zero-padded.
+        tests:
+          - not_null
+      - name: city
+        tests:
+          - not_null
+      - name: state
+        tests:
+          - not_null
+
+  - name: stg_orders
+    description: Order header records with timestamps cast to TIMESTAMP type.
+    columns:
+      - name: order_id
+        description: Primary key for orders.
+        tests:
+          - not_null
+          - unique
+      - name: customer_id
+        description: Foreign key to stg_customers.
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_customers')
+                field: customer_id
+      - name: order_status
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['delivered', 'shipped', 'canceled', 'unavailable', 'invoiced', 'processing', 'approved', 'created']
+      - name: order_purchase_timestamp
+        tests:
+          - not_null
+      - name: order_approved_at
+        description: Timestamp when the order was approved. Nullable for canceled/unavailable orders.
+      - name: order_delivered_carrier_date
+        description: Timestamp when the order was handed to the carrier.
+      - name: order_delivered_customer_date
+        description: Timestamp when the customer received the order.
+      - name: order_estimated_delivery_date
+        tests:
+          - not_null
+
+  - name: stg_order_items
+    description: Line items within each order. Grain is one row per order + item.
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - order_id
+            - order_item_id
+    columns:
+      - name: order_id
+        description: Foreign key to stg_orders.
+        tests:
+          - not_null
+      - name: order_item_id
+        description: Sequential item number within an order, starting at 1.
+        tests:
+          - not_null
+      - name: product_id
+        description: Foreign key to stg_products.
+        tests:
+          - not_null
+      - name: seller_id
+        description: Foreign key to stg_sellers.
+        tests:
+          - not_null
+      - name: shipping_limit_date
+        tests:
+          - not_null
+      - name: price
+        description: Item price in BRL.
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              strictly: false
+      - name: freight_value
+        description: Freight cost charged for this item in BRL.
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              strictly: false
+
+  - name: stg_order_payments
+    description: >
+      Payment records per order. One order can have multiple payment types.
+      Known data quality gap: at least one delivered order in the Olist dataset
+      (order_id bfbd0f9bdef84302105ad712db648a6c) has no matching payment record.
+      Downstream marts coalesce total_payment_value to 0 for such orders.
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - order_id
+            - payment_sequential
+    columns:
+      - name: order_id
+        description: Foreign key to stg_orders.
+        tests:
+          - not_null
+      - name: payment_sequential
+        description: Sequence number when multiple payment methods are used for one order.
+        tests:
+          - not_null
+      - name: payment_type
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['credit_card', 'boleto', 'voucher', 'debit_card', 'not_defined']
+      - name: payment_installments
+        tests:
+          - not_null
+      - name: payment_value
+        description: Amount paid via this payment method in BRL.
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              strictly: false
+
+  - name: stg_order_reviews
+    description: Customer reviews submitted for orders. Grain is one row per (review_id, order_id) — review_id is not unique due to a known data quality issue in the Olist dataset.
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - review_id
+            - order_id
+    columns:
+      - name: review_id
+        description: Review identifier. Not unique on its own — the same review_id can appear on different orders in the Olist dataset.
+        tests:
+          - not_null
+      - name: order_id
+        description: Foreign key to stg_orders.
+        tests:
+          - not_null
+      - name: review_score
+        description: Rating from 1 (worst) to 5 (best).
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4, 5]
+                quote: false
+      - name: review_comment_title
+        description: Optional short title left by the customer.
+      - name: review_comment_message
+        description: Optional free-text review body.
+      - name: review_creation_date
+        tests:
+          - not_null
+      - name: review_answer_timestamp
+        description: Timestamp when the seller responded to the review.
+
+  - name: stg_products
+    description: Product catalog with physical attributes and translated category names.
+    columns:
+      - name: product_id
+        description: Primary key for products.
+        tests:
+          - not_null
+          - unique
+      - name: product_category_name_english
+        description: English category name, falling back to Portuguese if no translation exists.
+      - name: product_name_length
+        description: Number of characters in the product name.
+      - name: product_description_length
+        description: Number of characters in the product description.
+      - name: product_photos_qty
+        description: Number of product photos published.
+      - name: product_weight_g
+        description: Product weight in grams.
+      - name: product_length_cm
+      - name: product_height_cm
+      - name: product_width_cm
+
+  - name: stg_sellers
+    description: Seller records with standardized zip codes.
+    columns:
+      - name: seller_id
+        description: Primary key for sellers.
+        tests:
+          - not_null
+          - unique
+      - name: zip_code
+        description: 5-digit zip code prefix, zero-padded.
+        tests:
+          - not_null
+      - name: city
+        tests:
+          - not_null
+      - name: state
+        tests:
+          - not_null
+
+  - name: stg_geolocation
+    description: Latitude/longitude coordinates keyed by zip code. Multiple rows per zip code in the raw data.
+    columns:
+      - name: zip_code
+        description: 5-digit zip code prefix, zero-padded.
+        tests:
+          - not_null
+      - name: latitude
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: -90
+              max_value: 90
+      - name: longitude
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: -180
+              max_value: 180
+      - name: city
+        tests:
+          - not_null
+      - name: state
+        tests:
+          - not_null

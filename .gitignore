@@ -1,0 +1,20 @@
+# credentials & secrets
+.env
+*.json
+
+# dbt generated artifacts (not source code)
+olist_transform/target/
+olist_transform/dbt_packages/
+olist_transform/logs/
+
+# meltano runtime
+olist_meltano/.meltano/
+
+# python & OS
+__pycache__/
+*.pyc
+.DS_Store
+data/
+
+# jupyter checkpoints
+.ipynb_checkpoints/

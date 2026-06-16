@@ -1,0 +1,151 @@
+# ELT Olist — Brazilian E-Commerce Pipeline
+
+An end-to-end ELT pipeline using the [Olist Brazilian E-Commerce dataset](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce) from Kaggle.
+
+## Tech Stack
+
+| Tool | Purpose |
+|---|---|
+| Supabase (PostgreSQL) | Source system — holds raw CSV data |
+| Meltano | Extract from Supabase, load into BigQuery |
+| BigQuery | Data warehouse |
+| dbt | Transformations, testing, star schema |
+| Dagster | Orchestration (planned) |
+
+## Project Structure
+
+```
+ELT_olist/
+├── m2-environment.yml          # Conda environment
+├── olist_meltano/              # Meltano EL pipeline (Supabase → BigQuery)
+│   ├── meltano.yml
+│   └── .env.example
+└── olist_transform/            # dbt transformation layer
+    ├── profiles.yml
+    ├── dbt_project.yml
+    ├── packages.yml
+    └── models/
+        ├── staging/            # 8 staging views (one per source table)
+        └── marts/              # 5 mart tables (star schema)
+```
+
+## Data Model
+
+The raw data consists of 9 tables (~1.1M records) loaded into BigQuery under the `olist_raw` dataset.
+
+### Staging Layer (`olist_transformed_staging`)
+8 views — one per source table. Light cleaning only: type casting, column renaming, zip code padding (Brazilian CEP codes are always 5 digits), and product category translation joined into `stg_products`.
+
+### Marts Layer (`olist_transformed_marts`)
+
+| Model | Description | Sample Questions |
+|---|---|---|
+| `dim_customers` | Customers enriched with lat/lng from geolocation | Customer distribution by state, repeat vs one-time buyers |
+| `dim_products` | Products with English category name, photos, dimensions | Best performing categories, does photo count affect sales? |
+| `dim_sellers` | Sellers enriched with lat/lng from geolocation | Seller distribution by state, top sellers by revenue |
+| `fact_orders` | One row per order item. PK: `order_item_sk` (surrogate key). Includes `delivery_days`, `estimated_delivery_days`, `is_late` | Revenue by month/category/state, late delivery rate, freight analysis |
+| `fact_reviews` | One row per review with `sentiment` derived from `review_score` | Average score by seller/product, sentiment distribution, delivery vs rating correlation |
+
+### Joining the marts
+
+| Join | Column to use |
+|---|---|
+| `fact_orders` → `dim_customers` | `customer_id` |
+| `fact_orders` → `dim_products` | `product_id` |
+| `fact_orders` → `dim_sellers` | `seller_id` |
+| `fact_reviews` → `fact_orders` | `order_id` |
+| `fact_reviews` → `dim_customers` | `customer_id` |
+
+> `order_item_sk` is the row identifier for `fact_orders` — use it as the PK in tests, not as a join key.
+
+---
+
+## Setup Instructions (For Group Members)
+
+### Prerequisites
+- [Anaconda](https://www.anaconda.com/download) or Miniconda installed
+- A GitHub collaborator invite accepted from Marcus — required to push changes to the repo
+- The service account JSON key file — ask the project owner (Marcus) to share it with you securely
+- A Google account added to the GCP project by Marcus — required to view data and run queries in the BigQuery console (see below)
+
+---
+
+### For the project owner only — adding members to GitHub and GCP
+
+> Skip this section if you are not the project owner. Send your GitHub username and Google account email to Marcus.
+
+**GitHub — add as collaborator:**
+1. Go to the GitHub repo → **Settings → Collaborators**
+2. Click **Add people**
+3. Enter the group member's GitHub username
+4. They will receive an email invite — they must accept it before they can push
+
+**GCP — grant BigQuery access:**
+1. Go to [GCP Console](https://console.cloud.google.com) and select the `olist-498903` project
+2. Navigate to **IAM & Admin → IAM**
+3. Click **Grant Access**
+4. Enter the group member's Google account email
+5. Assign the role: **BigQuery User**
+6. Click **Save**
+
+Once added to GCP, the group member can log into [console.cloud.google.com](https://console.cloud.google.com), navigate to BigQuery, and browse and query all datasets.
+
+---
+
+### Step 1 — Clone the repo
+
+> Accept the GitHub collaborator invite from Marcus before cloning, otherwise you will not be able to push changes.
+
+```bash
+git clone <repo-url>
+cd ELT_olist
+```
+
+### Step 2 — Create and activate conda environment
+```bash
+conda env create -f m2-environment.yml
+conda activate m2
+```
+
+### Step 3 — Save BigQuery credentials
+Save the service account JSON key file somewhere safe on your machine **outside the repo** (e.g. `~/.gcp/olist-key.json`). Note the full path.
+
+> The key gives dbt programmatic access to create and update tables in BigQuery. To view and query data in the BigQuery console, your Google account must be added to the GCP project by Marcus (see above).
+
+### Step 4 — Configure dbt
+Open `olist_transform/profiles.yml` and update the `keyfile` path to where you saved your JSON key:
+```yaml
+keyfile: /YOUR/PATH/TO/your-key.json
+```
+
+### Step 5 — Install dbt packages
+```bash
+cd olist_transform
+dbt deps
+```
+
+### Step 6 — Run dbt models
+```bash
+dbt run
+```
+
+### Step 7 — Run dbt tests
+```bash
+dbt test
+```
+
+> All dbt commands should be run from inside the `olist_transform/` directory.
+
+---
+
+## Note on Meltano (Optional)
+
+The data is already loaded into BigQuery — you do not need to run Meltano unless you want to reload the raw data from scratch.
+
+If you do need to re-run the pipeline:
+1. Copy `olist_meltano/.env.example` to `olist_meltano/.env` and fill in your Supabase connection string
+2. Update `credentials_path` in `olist_meltano/meltano.yml` to your local key file path
+3. Run from inside `olist_meltano/`:
+```bash
+meltano run tap-postgres target-bigquery
+```

@@ -1,0 +1,516 @@
+version: 2
+
+models:
+  - name: dim_customers
+    description: Customer dimension enriched with geolocation coordinates averaged per zip code.
+    columns:
+      - name: customer_id
+        description: Primary key connecting a customer record to their order in fact_orders.
+        tests:
+          - not_null
+          - unique
+      - name: customer_unique_id
+        description: Identifies the actual person across multiple orders.
+        tests:
+          - not_null
+      - name: zip_code
+        tests:
+          - not_null
+      - name: city
+        tests:
+          - not_null
+      - name: state
+        tests:
+          - not_null
+      - name: latitude
+        description: Average latitude for the customer's zip code. Null if zip code is not in geolocation data.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: -90
+              max_value: 90
+      - name: longitude
+        description: Average longitude for the customer's zip code. Null if zip code is not in geolocation data.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: -180
+              max_value: 180
+
+  - name: dim_products
+    description: Product dimension with physical attributes and English category names.
+    columns:
+      - name: product_id
+        description: Primary key for products.
+        tests:
+          - not_null
+          - unique
+      - name: product_category_name_english
+        description: English category name.
+      - name: product_photos_qty
+        description: Number of published product photos.
+      - name: product_weight_g
+        description: Product weight in grams.
+      - name: product_length_cm
+      - name: product_height_cm
+      - name: product_width_cm
+
+  - name: dim_sellers
+    description: >
+      Seller dimension enriched with geolocation coordinates averaged per zip code.
+      Sourced from snap_dim_sellers (active records only) so it always reflects the
+      seller's current address.
+    columns:
+      - name: seller_id
+        description: Primary key for sellers.
+        tests:
+          - not_null
+          - unique
+      - name: zip_code
+        tests:
+          - not_null
+      - name: city
+        tests:
+          - not_null
+      - name: state
+        tests:
+          - not_null
+      - name: latitude
+        description: Average latitude for the seller's zip code. Null if zip code is not in geolocation data.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: -90
+              max_value: 90
+      - name: longitude
+        description: Average longitude for the seller's zip code. Null if zip code is not in geolocation data.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: -180
+              max_value: 180
+
+  - name: dim_sellers_history
+    description: >
+      Full SCD Type 2 history of seller address changes sourced from snap_dim_sellers.
+      Each row represents one version of a seller's location. Use is_active = true to
+      get the current record, or filter on dbt_valid_from / dbt_valid_to for point-in-time
+      queries (e.g. attributing a sale to the seller's location at the time of the order).
+    columns:
+      - name: dbt_scd_id
+        description: Surrogate key for this snapshot row.
+        tests:
+          - not_null
+          - unique
+      - name: seller_id
+        description: Seller identifier. Not unique — one seller has one row per address version.
+        tests:
+          - not_null
+      - name: zip_code
+        tests:
+          - not_null
+      - name: city
+        tests:
+          - not_null
+      - name: state
+        tests:
+          - not_null
+      - name: latitude
+        description: Average latitude for the seller's zip code at this version.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: -90
+              max_value: 90
+      - name: longitude
+        description: Average longitude for the seller's zip code at this version.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: -180
+              max_value: 180
+      - name: dbt_valid_from
+        description: Timestamp when this version of the seller record became active.
+        tests:
+          - not_null
+      - name: dbt_valid_to
+        description: Timestamp when this version expired. Null if this is the current record.
+      - name: is_active
+        description: True if this is the seller's current address (dbt_valid_to IS NULL).
+        tests:
+          - not_null
+
+  - name: fact_orders
+    description: >
+      Order fact table at the grain of one row per order item. Combines order headers,
+      line items, and aggregated payment data. Includes derived delivery metrics.
+    columns:
+      - name: order_item_sk
+        description: Surrogate key generated from order_id + order_item_id.
+        tests:
+          - not_null
+          - unique
+      - name: order_id
+        description: Foreign key to the order header.
+        tests:
+          - not_null
+      - name: order_item_id
+        description: Sequential item number within the order.
+        tests:
+          - not_null
+      - name: customer_id
+        description: Foreign key to dim_customers.
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_customers')
+                field: customer_id
+      - name: product_id
+        description: Foreign key to dim_products.
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_products')
+                field: product_id
+      - name: seller_id
+        description: Foreign key to dim_sellers.
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_sellers')
+                field: seller_id
+      - name: order_status
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['delivered', 'shipped', 'canceled', 'unavailable', 'invoiced', 'processing', 'approved', 'created']
+      - name: order_purchase_timestamp
+        tests:
+          - not_null
+      - name: order_approved_at
+        description: Null for canceled or unavailable orders.
+      - name: order_delivered_carrier_date
+      - name: order_delivered_customer_date
+      - name: order_estimated_delivery_date
+        tests:
+          - not_null
+      - name: shipping_limit_date
+        tests:
+          - not_null
+      - name: price
+        description: Item price in BRL.
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              strictly: false
+      - name: freight_value
+        description: Freight cost for this item in BRL.
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              strictly: false
+      - name: total_payment_value
+        description: >
+          Total payment value across all payment methods for the order. Null when
+          no payment record exists in the source data (known gap: order
+          bfbd0f9bdef84302105ad712db648a6c). Marts coalesce this to 0 for aggregations.
+      - name: max_installments
+        description: Maximum number of installments used across all payment methods for the order.
+      - name: delivery_days
+        description: Actual delivery time in days from purchase to customer receipt. Null if not yet delivered.
+      - name: estimated_delivery_days
+        description: Estimated delivery time in days from purchase.
+      - name: is_late
+        description: True if the order was delivered after the estimated delivery date.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [true, false]
+                quote: false
+
+  - name: fact_reviews
+    description: >
+      Review fact table at the grain of one row per (review_id, order_id). review_id
+      is not unique due to a known data quality issue in the Olist dataset.
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - review_id
+            - order_id
+    columns:
+      - name: review_id
+        description: Review identifier. Not unique on its own — the same review_id can appear on different orders in the Olist dataset.
+        tests:
+          - not_null
+      - name: order_id
+        description: Foreign key linking the review to the order.
+        tests:
+          - not_null
+      - name: customer_id
+        description: Customer who placed the order, joined from stg_orders.
+      - name: review_score
+        description: Rating from 1 (worst) to 5 (best).
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [1, 2, 3, 4, 5]
+                quote: false
+      - name: sentiment
+        description: Derived sentiment — positive (4-5), neutral (3), negative (1-2).
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['positive', 'neutral', 'negative']
+      - name: review_comment_title
+        description: Optional short title left by the customer.
+      - name: review_comment_message
+        description: Optional free-text review body.
+      - name: review_creation_date
+        tests:
+          - not_null
+      - name: review_answer_timestamp
+        description: Timestamp when the seller responded. Null if unanswered.
+
+  - name: mart_customer_summary
+    description: >
+      One row per customer (customer_unique_id). Aggregates order history, spend,
+      satisfaction, and delivery experience. Foundation for retention and RFM analysis.
+    columns:
+      - name: customer_unique_id
+        description: Primary key — the actual person identifier across multiple orders.
+        tests:
+          - not_null
+          - unique
+      - name: state
+        tests:
+          - not_null
+      - name: city
+        tests:
+          - not_null
+      - name: total_orders
+        description: Number of delivered orders placed by this customer.
+        tests:
+          - not_null
+      - name: first_order_date
+        tests:
+          - not_null
+      - name: last_order_date
+        tests:
+          - not_null
+      - name: days_since_last_order
+        description: Days between the customer's last order and today.
+        tests:
+          - not_null
+      - name: total_spend
+        description: Sum of total_payment_value across all delivered orders.
+      - name: avg_order_value
+        description: Average payment value per order.
+      - name: avg_review_score
+        description: Average review score left by this customer. Null if no reviews.
+      - name: late_orders
+        description: Number of orders that were delivered after the estimated date.
+      - name: pct_late_orders
+        description: Percentage of orders that were late.
+      - name: customer_segment
+        description: >
+          Recency-based segment — new (≤90 days, 1 order), active (≤180 days),
+          at_risk (≤365 days), churned (>365 days).
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['new', 'active', 'at_risk', 'churned']
+
+  - name: mart_cohort_retention
+    description: >
+      Monthly cohort retention table. Each row represents how many customers from a
+      given cohort (month of first order) were still purchasing N months later.
+      Use this to track the platform's retention trend over time.
+    columns:
+      - name: cohort_month
+        description: The month of each cohort's first purchase.
+        tests:
+          - not_null
+      - name: months_since_first
+        description: Months elapsed since the cohort's first purchase (0 = acquisition month).
+        tests:
+          - not_null
+      - name: order_month
+        description: The calendar month of activity being measured.
+        tests:
+          - not_null
+      - name: cohort_size
+        description: Total customers in this cohort (denominator for retention rate).
+        tests:
+          - not_null
+      - name: customers_retained
+        description: Customers from this cohort who placed an order in this month.
+        tests:
+          - not_null
+      - name: retention_rate_pct
+        description: customers_retained / cohort_size × 100.
+        tests:
+          - not_null
+
+  - name: mart_seller_health
+    description: >
+      One row per seller. Combines all-time delivery performance and review scores into a
+      composite health score (0–100), plus a 90-day recent window to surface trend signals.
+      Includes seller location (state, city from dim_sellers) and intervention_reason to
+      support downloadable dashboard reports. Filter on intervention_reason IS NOT NULL
+      to get the full list of sellers requiring action.
+      Designed to run daily via Dagster: score_delta and trend_status power dashboard alerts
+      and proactive seller outreach before churn occurs.
+      Formula: 40% avg review score + 35% on-time delivery rate + 25% delivery rate.
+    columns:
+      - name: seller_id
+        description: Primary key.
+        tests:
+          - not_null
+          - unique
+      - name: state
+        description: Seller's current state from dim_sellers. Used for regional routing of intervention tasks.
+        tests:
+          - not_null
+      - name: city
+        description: Seller's current city from dim_sellers.
+        tests:
+          - not_null
+      - name: total_orders
+        description: Total distinct orders handled by this seller (all-time).
+        tests:
+          - not_null
+      - name: delivered_orders
+        tests:
+          - not_null
+      - name: cancelled_orders
+        tests:
+          - not_null
+      - name: late_orders
+        description: Delivered orders where actual delivery exceeded the estimated date.
+        tests:
+          - not_null
+      - name: delivery_rate_pct
+        description: Percentage of orders that were successfully delivered.
+      - name: on_time_rate_pct
+        description: Percentage of delivered orders that arrived on or before the estimated date.
+      - name: avg_review_score
+        description: Average customer review score (1–5). Defaults to 3.0 (neutral) for sellers with no reviews.
+        tests:
+          - not_null
+      - name: health_score
+        description: Composite health score 0–100 (all-time baseline).
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 100
+      - name: health_tier
+        description: Tier label — excellent (≥80), good (≥60), at_risk (≥40), critical (<40).
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['excellent', 'good', 'at_risk', 'critical']
+      - name: recent_total_orders
+        description: Orders in the last 90 days before analysis date. Null if seller was inactive in this window.
+      - name: recent_health_score
+        description: Health score computed over the 90-day recent window. Null if no recent orders.
+      - name: score_delta
+        description: recent_health_score minus health_score. Positive = improving; negative = declining.
+        tests:
+          - not_null
+      - name: trend_status
+        description: >
+          inactive — no orders in past 90 days;
+          declining — recent score dropped >10 points vs all-time baseline;
+          stable — no significant change.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['inactive', 'declining', 'stable']
+      - name: intervention_reason
+        description: >
+          Human-readable explanation of why this seller needs attention.
+          Null for stable sellers. Filter on IS NOT NULL to generate the
+          downloadable intervention report for the dashboard.
+        tests:
+          - accepted_values:
+              arguments:
+                values:
+                  - 'No orders in past 90 days — possible churn'
+                  - 'Critical score and dropping — immediate outreach required'
+                  - 'At-risk score and worsening — schedule check-in'
+                  - 'Critical score — performance review needed'
+                  - 'At-risk score — monitor closely'
+
+  - name: mart_rfm_scores
+    description: >
+      RFM (Recency, Frequency, Monetary) segmentation. One row per customer.
+      Each dimension is scored 1–5 using NTILE(5), then combined into a segment label
+      and a campaign_type assignment. Supports dashboard campaign lists — join with
+      mart_customer_summary on customer_unique_id to add state/city for CRM export.
+    columns:
+      - name: customer_unique_id
+        description: Primary key.
+        tests:
+          - not_null
+          - unique
+      - name: cohort_month
+        description: Month of the customer's first delivered order (acquisition cohort).
+        tests:
+          - not_null
+      - name: months_since_first_order
+        description: Months elapsed between cohort_month and the analysis date.
+        tests:
+          - not_null
+      - name: recency_days
+        description: Days since the customer's last delivered order.
+        tests:
+          - not_null
+      - name: frequency
+        description: Number of distinct delivered orders.
+        tests:
+          - not_null
+      - name: monetary
+        description: Total spend across all delivered orders in BRL.
+        tests:
+          - not_null
+      - name: recency_score
+        description: 1–5 score (5 = most recent).
+        tests:
+          - not_null
+      - name: frequency_score
+        description: 1–5 score (5 = most frequent).
+        tests:
+          - not_null
+      - name: monetary_score
+        description: 1–5 score (5 = highest spend).
+        tests:
+          - not_null
+      - name: rfm_score
+        description: Average of the three scores (1.0–5.0).
+        tests:
+          - not_null
+      - name: rfm_segment
+        description: Segment label derived from score combinations.
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['champions', 'loyal_customers', 'promising', 'at_risk', 'lost', 'potential_loyalists']
+      - name: campaign_type
+        description: >
+          Campaign action assigned from rfm_segment and recency/frequency signals.
+          second_purchase — first-time buyer in the 30–60 day intervention window;
+          winback — at_risk customer; reactivation — lost customer;
+          nurture — promising or potential_loyalist; loyalty_reward — champion or loyal.
+          Null for customers who need no immediate action.
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['second_purchase', 'winback', 'reactivation', 'nurture', 'loyalty_reward']

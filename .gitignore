@@ -18,3 +18,5 @@ data/
 
 # jupyter checkpoints
 .ipynb_checkpoints/
+logs/
+olist_transform/.user.yml

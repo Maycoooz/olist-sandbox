@@ -241,7 +241,7 @@ def fetch():
         },
         'geo': [
             {
-                'state': r.state, 'name': r.name,
+                'state': r.state, 'name': r['name'],
                 'lat': float(r.lat), 'lng': float(r.lng),
                 'customers': int(r.customers), 'sellers': int(r.sellers),
                 'customer_per_seller': _f(r.customer_per_seller),
@@ -300,7 +300,7 @@ def fetch():
 
 
 # ── HTML template (light theme, ECharts + AG Grid) ─────────────────────────────
-HTML_TEMPLATE = """<!DOCTYPE html>
+HTML_TEMPLATE = r"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">

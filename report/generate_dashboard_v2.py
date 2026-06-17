@@ -299,7 +299,7 @@ def fetch():
     }
 
 
-# ── HTML template ───────────────────────────────────────────────────────────────
+# ── HTML template (dark theme) ─────────────────────────────────────────────────
 HTML_TEMPLATE = r"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -314,16 +314,16 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 <style>
 :root {
-  --navy:#0F172A; --navy2:#1E293B; --navy3:#334155;
-  --teal:#0EA5E9; --teal-l:#BAE6FD; --teal-d:#0284C7;
-  --bg:#F1F5F9; --card:#FFFFFF; --border:#E2E8F0;
-  --text:#1E293B; --muted:#64748B;
-  --shadow-sm:0 2px 8px rgba(15,23,42,.07);
-  --shadow-md:0 8px 24px rgba(15,23,42,.13);
-  --radius:12px;
-  --transition:all .18s ease;
-  --excellent:#16A34A; --good:#D97706; --at-risk:#EA580C; --critical:#DC2626;
-  --stable:#2563EB; --declining:#DC2626; --inactive:#9CA3AF;
+  --bg:#080D1A; --surface:#0F172A; --surface2:#1E293B;
+  --border:#1E293B; --border2:#334155;
+  --cyan:#06B6D4; --cyan-d:#0891B2; --cyan-glow:rgba(6,182,212,.18);
+  --purple:#8B5CF6;
+  --text:#F1F5F9; --muted:#64748B;
+  --shadow-sm:0 2px 12px rgba(0,0,0,.5);
+  --shadow-md:0 8px 32px rgba(0,0,0,.6);
+  --radius:10px; --transition:all .18s ease;
+  --excellent:#10B981; --good:#F59E0B; --at-risk:#F97316; --critical:#EF4444;
+  --stable:#3B82F6; --declining:#EF4444; --inactive:#64748B;
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 html,body{
@@ -335,95 +335,106 @@ html,body{
 
 /* ── HEADER ── */
 header{
-  height:60px;
-  background:linear-gradient(135deg,#0F172A 0%,#1A2E4A 100%);
-  border-bottom:2px solid var(--teal);
+  height:64px;
+  background:linear-gradient(90deg,#080D1A 0%,#0F172A 60%,#080D1A 100%);
+  border-bottom:1px solid var(--border2);
   display:flex;align-items:center;justify-content:space-between;
   padding:0 24px;flex-shrink:0;z-index:1000;position:relative;
 }
-header h1{color:#fff;font-size:17px;font-weight:700;letter-spacing:-.3px}
-header .sub{color:var(--teal-l);font-size:11px;margin-top:3px;font-weight:400}
-.meta{color:#94A3B8;font-size:11px;text-align:right}
+header::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:4px;
+  background:linear-gradient(180deg,var(--cyan) 0%,var(--purple) 100%);
+}
+header h1{color:#fff;font-size:16px;font-weight:700;letter-spacing:-.2px;padding-left:8px}
+header .sub{color:var(--muted);font-size:11px;margin-top:3px;padding-left:8px}
+.meta{color:var(--muted);font-size:11px;text-align:right;line-height:1.6}
+.meta span{color:var(--cyan);font-weight:600}
 
 /* ── LAYOUT ── */
-#layout{display:flex;height:calc(100vh - 60px)}
+#layout{display:flex;height:calc(100vh - 64px)}
 
 /* ── MAP PANEL ── */
 #map-panel{width:38%;display:flex;flex-direction:column;border-right:1px solid var(--border)}
 #map{flex:1}
-#map-footer{background:var(--navy);padding:14px 16px;flex-shrink:0}
-.mode-label{color:#94A3B8;font-size:10px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;font-weight:600}
+#map-footer{background:var(--surface);padding:14px 16px;flex-shrink:0;border-top:1px solid var(--border)}
+.mode-label{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;font-weight:600}
 .mode-btns{
-  display:flex;flex-wrap:wrap;gap:0;margin-bottom:6px;
-  border:1px solid #334155;border-radius:8px;overflow:hidden;
+  display:flex;flex-wrap:wrap;gap:0;margin-bottom:8px;
+  border:1px solid var(--border2);border-radius:8px;overflow:hidden;
 }
 .mode-btn{
-  flex:1;padding:6px 8px;
-  border:none;border-right:1px solid #334155;
-  background:transparent;color:#94A3B8;font-size:11px;font-weight:500;
+  flex:1;padding:7px 6px;
+  border:none;border-right:1px solid var(--border2);
+  background:transparent;color:var(--muted);font-size:11px;font-weight:500;
   cursor:pointer;transition:var(--transition);white-space:nowrap;
   font-family:'Inter',system-ui,sans-serif;
 }
 .mode-btn:last-child{border-right:none}
-.mode-btn:hover{background:#1E293B;color:#CBD5E1}
-.mode-btn.active{background:var(--teal);color:#fff;font-weight:600}
-#mode-desc{color:#475569;font-size:10px;margin-bottom:10px;min-height:14px;font-style:italic;line-height:1.4}
-#legend-title{color:#CBD5E1;font-size:10px;font-weight:600;margin-bottom:4px}
+.mode-btn:hover{background:var(--surface2);color:var(--text)}
+.mode-btn.active{background:var(--cyan);color:#fff;font-weight:700}
+#mode-desc{color:#475569;font-size:10px;margin-bottom:10px;min-height:14px;font-style:italic;line-height:1.5}
+#legend-title{color:var(--text);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
 #map-legend{display:flex;align-items:center;gap:8px}
-.legend-bar{flex:1;height:8px;border-radius:4px}
-.legend-labels{display:flex;justify-content:space-between;color:#64748B;font-size:10px;margin-top:4px;font-weight:600}
+.legend-bar{flex:1;height:6px;border-radius:4px}
+.legend-labels{display:flex;justify-content:space-between;color:var(--muted);font-size:10px;margin-top:4px;font-weight:600}
 
 /* ── DASHBOARD PANEL ── */
-#dashboard{width:62%;display:flex;flex-direction:column;overflow:hidden}
+#dashboard{width:62%;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
 #tabs{
-  display:flex;background:#fff;
-  border-bottom:2px solid var(--border);padding:0 20px;flex-shrink:0;
-  box-shadow:0 1px 3px rgba(15,23,42,.04);
+  display:flex;background:var(--surface);
+  border-bottom:1px solid var(--border2);padding:0 20px;flex-shrink:0;
 }
 .tab{
-  padding:15px 22px;border:none;background:none;
-  font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;
-  border-bottom:3px solid transparent;margin-bottom:-2px;
+  padding:16px 22px;border:none;background:none;
+  font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;
+  border-bottom:2px solid transparent;margin-bottom:-1px;
   transition:color .15s,border-color .15s;
-  text-transform:uppercase;letter-spacing:.07em;
+  text-transform:uppercase;letter-spacing:.09em;
   font-family:'Inter',system-ui,sans-serif;
 }
-.tab:hover{color:var(--teal)}
-.tab.active{color:var(--teal);border-bottom-color:var(--teal)}
-#panes{flex:1;overflow-y:auto;padding:18px 20px}
-#panes::-webkit-scrollbar{width:5px}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--cyan);border-bottom-color:var(--cyan)}
+#panes{flex:1;overflow-y:auto;padding:16px 20px;background:var(--bg)}
+#panes::-webkit-scrollbar{width:4px}
 #panes::-webkit-scrollbar-track{background:transparent}
-#panes::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:4px}
+#panes::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
 .pane{display:none}
-.pane.active{display:block}
+.pane.active{display:block;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 
 /* ── CARDS ── */
 .card{
-  background:#fff;border-radius:var(--radius);
-  box-shadow:var(--shadow-sm);padding:18px 20px;margin-bottom:14px;
-  transition:box-shadow .18s;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:18px 20px;margin-bottom:14px;
+  transition:border-color .18s,box-shadow .18s;
 }
-.card:hover{box-shadow:var(--shadow-md)}
+.card:hover{border-color:var(--border2);box-shadow:var(--shadow-sm)}
 .card-title{
-  font-size:11px;font-weight:700;text-transform:uppercase;
-  letter-spacing:.07em;color:var(--muted);margin-bottom:12px;
+  font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.1em;color:var(--cyan);margin-bottom:14px;
 }
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
 
 /* ── KPI CARDS ── */
 .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
 .kpi-card{
-  background:linear-gradient(135deg,#fff 0%,#F8FBFF 100%);
-  border-radius:var(--radius);padding:16px 18px;
-  box-shadow:var(--shadow-sm);border-top:3px solid var(--teal);
-  transition:transform .18s ease,box-shadow .18s ease;cursor:default;
+  background:var(--surface);border:1px solid var(--border);
+  border-left:3px solid var(--cyan);
+  border-radius:var(--radius);padding:18px 20px;
+  transition:transform .18s ease,box-shadow .18s ease,border-color .18s;
+  cursor:default;
 }
-.kpi-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md)}
-.kpi-v{font-size:22px;font-weight:800;color:var(--navy);line-height:1}
-.kpi-l{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-top:6px;font-weight:600}
-.kpi-card.warn{border-top-color:#D97706}
-.kpi-card.good{border-top-color:#16A34A}
-.kpi-card.danger{border-top-color:#DC2626}
+.kpi-card:hover{transform:translateY(-2px);box-shadow:0 0 24px var(--cyan-glow);border-color:var(--cyan)}
+.kpi-v{font-size:30px;font-weight:800;color:#fff;line-height:1;letter-spacing:-.5px}
+.kpi-l{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--cyan);margin-top:8px;font-weight:600}
+.kpi-card.warn{border-left-color:var(--good)}
+.kpi-card.warn:hover{box-shadow:0 0 24px rgba(245,158,11,.18);border-color:var(--good)}
+.kpi-card.warn .kpi-l{color:var(--good)}
+.kpi-card.good{border-left-color:var(--excellent)}
+.kpi-card.good:hover{box-shadow:0 0 24px rgba(16,185,129,.18);border-color:var(--excellent)}
+.kpi-card.good .kpi-l{color:var(--excellent)}
+.kpi-card.danger{border-left-color:var(--critical)}
+.kpi-card.danger .kpi-l{color:var(--critical)}
 
 /* ── SELLER KPIs ── */
 .seller-kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
@@ -432,82 +443,80 @@ header .sub{color:var(--teal-l);font-size:11px;margin-top:3px;font-weight:400}
 .tbl-controls{display:flex;gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap}
 .tbl-filter{
   padding:5px 14px;border-radius:20px;
-  border:1px solid var(--border);background:#fff;
+  border:1px solid var(--border2);background:transparent;
   font-size:11px;color:var(--muted);cursor:pointer;
   transition:var(--transition);font-weight:500;
   font-family:'Inter',system-ui,sans-serif;
 }
-.tbl-filter:hover,.tbl-filter.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.tbl-filter:hover,.tbl-filter.active{background:var(--cyan);color:#fff;border-color:var(--cyan)}
 .tbl-search{
   flex:1;padding:6px 12px;border-radius:8px;
-  border:1px solid var(--border);font-size:12px;outline:none;
+  border:1px solid var(--border2);font-size:12px;outline:none;
+  background:var(--surface2);color:var(--text);
   font-family:'Inter',system-ui,sans-serif;transition:border-color .15s;
 }
-.tbl-search:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(14,165,233,.1)}
+.tbl-search::placeholder{color:var(--muted)}
+.tbl-search:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(6,182,212,.15)}
 .tbl-count{font-size:11px;color:var(--muted);white-space:nowrap}
 #clear-state-filter{
   padding:5px 12px;border-radius:20px;
-  border:1px solid var(--teal);background:rgba(14,165,233,.08);
-  color:var(--teal);font-size:11px;cursor:pointer;font-weight:600;
+  border:1px solid var(--cyan);background:rgba(6,182,212,.1);
+  color:var(--cyan);font-size:11px;cursor:pointer;font-weight:600;
   display:none;transition:var(--transition);
   font-family:'Inter',system-ui,sans-serif;
 }
-#clear-state-filter:hover{background:var(--teal);color:#fff}
+#clear-state-filter:hover{background:var(--cyan);color:#fff}
 .tbl-scroll{overflow-x:auto;max-height:380px;overflow-y:auto}
 table{width:100%;border-collapse:collapse;font-size:12px}
-thead{position:sticky;top:0;z-index:2;background:var(--bg)}
+thead{position:sticky;top:0;z-index:2}
 th{
   text-align:left;padding:9px 10px;
-  background:var(--bg);font-size:10px;
-  text-transform:uppercase;letter-spacing:.06em;color:var(--muted);
-  border-bottom:2px solid var(--border);font-weight:700;
+  background:var(--surface2);font-size:10px;
+  text-transform:uppercase;letter-spacing:.07em;color:var(--muted);
+  border-bottom:1px solid var(--border2);font-weight:700;
 }
 th.sortable{cursor:pointer;user-select:none}
-th.sortable:hover{color:var(--teal)}
+th.sortable:hover{color:var(--cyan)}
 .sort-icon{margin-left:4px;opacity:.4;font-size:9px}
-th.sort-asc .sort-icon::after{content:'↑';opacity:1;color:var(--teal)}
-th.sort-desc .sort-icon::after{content:'↓';opacity:1;color:var(--teal)}
+th.sort-asc .sort-icon::after{content:'↑';opacity:1;color:var(--cyan)}
+th.sort-desc .sort-icon::after{content:'↓';opacity:1;color:var(--cyan)}
 th:not(.sort-asc):not(.sort-desc) .sort-icon::after{content:'↕'}
-td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
-tr:nth-child(even) td{background:#FAFBFC}
-tr:hover td{background:#F0F9FF !important}
+td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text)}
+tr:nth-child(even) td{background:rgba(255,255,255,.02)}
+tr:hover td{background:rgba(6,182,212,.05) !important}
 .tr-declining td:first-child{border-left:3px solid var(--critical)}
 .tr-inactive td:first-child{border-left:3px solid var(--inactive)}
 .tr-stable td:first-child{border-left:3px solid var(--stable)}
 .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600}
-.badge-excellent{background:#DCFCE7;color:#15803D}
-.badge-good{background:#FEF3C7;color:#B45309}
-.badge-at_risk{background:#FFEDD5;color:#C2410C}
-.badge-critical{background:#FEE2E2;color:#B91C1C}
-.badge-declining{background:#FEE2E2;color:#B91C1C}
-.badge-inactive{background:#F3F4F6;color:#6B7280}
-.badge-stable{background:#DBEAFE;color:#1D4ED8}
+.badge-excellent{background:rgba(16,185,129,.15);color:#34D399}
+.badge-good{background:rgba(245,158,11,.15);color:#FCD34D}
+.badge-at_risk{background:rgba(249,115,22,.15);color:#FB923C}
+.badge-critical{background:rgba(239,68,68,.15);color:#F87171}
+.badge-declining{background:rgba(239,68,68,.15);color:#F87171}
+.badge-inactive{background:rgba(100,116,139,.15);color:#94A3B8}
+.badge-stable{background:rgba(59,130,246,.15);color:#93C5FD}
 .delta-neg{color:var(--critical);font-weight:700}
 .delta-pos{color:var(--excellent);font-weight:700}
 .reason-text{color:var(--muted);font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 /* ── MAP ── */
-.leaflet-tile-pane{filter:saturate(0.18) brightness(0.88)}
+.leaflet-tile-pane{filter:brightness(0.9)}
 .leaflet-popup-content-wrapper{
   padding:0 !important;border-radius:10px !important;overflow:hidden;
   box-shadow:var(--shadow-md) !important;
+  background:var(--surface2) !important;border:1px solid var(--border2) !important;
 }
+.leaflet-popup-tip{background:var(--surface2) !important}
 .leaflet-popup-content{font-size:12px;line-height:1.6;margin:0 !important}
 .popup-header{padding:10px 14px;color:#fff;font-weight:700;font-size:13px;line-height:1.3}
-.popup-body{padding:10px 14px}
+.popup-body{padding:10px 14px;background:var(--surface2)}
 .popup-row{
   display:flex;justify-content:space-between;gap:16px;
-  padding:3px 0;border-bottom:1px solid #F1F5F9;
+  padding:3px 0;border-bottom:1px solid var(--border);
 }
 .popup-row:last-child{border-bottom:none}
 .popup-label{color:var(--muted);font-size:11px}
-.popup-val{font-weight:600;color:var(--navy);font-size:11px}
-
-@keyframes pulse-ring{
-  0%{transform:scale(1);opacity:.8}
-  50%{transform:scale(1.2);opacity:.3}
-  100%{transform:scale(1);opacity:.8}
-}
+.popup-val{font-weight:600;color:var(--text);font-size:11px}
 </style>
 </head>
 <body>
@@ -518,7 +527,7 @@ tr:hover td{background:#F0F9FF !important}
   </div>
   <div class="meta">
     <div>Olist Brazilian Dataset</div>
-    <div id="gen-ts"></div>
+    <div id="gen-ts"><span></span></div>
   </div>
 </header>
 
@@ -638,27 +647,30 @@ tr:hover td{background:#F0F9FF !important}
 <script>
 /*INLINE_DATA*/
 
-// ── Plotly layout factory ────────────────────────────────────────────────────
+// ── Plotly layout factory (dark theme) ───────────────────────────────────────
 const PL = (extra={}) => Object.assign({
   margin:{l:56,r:16,t:28,b:48},
-  paper_bgcolor:'white', plot_bgcolor:'#F8FAFC',
-  font:{family:"'Inter',system-ui,sans-serif",color:'#1E293B',size:12},
-  hoverlabel:{bgcolor:'#1E293B',font:{color:'#fff',family:"'Inter',system-ui,sans-serif",size:12},bordercolor:'#1E293B'},
-  showlegend:true, legend:{font:{size:11}},
+  paper_bgcolor:'#0F172A', plot_bgcolor:'#0F172A',
+  font:{family:"'Inter',system-ui,sans-serif",color:'#F1F5F9',size:12},
+  hoverlabel:{bgcolor:'#1E293B',font:{color:'#F1F5F9',family:"'Inter',system-ui,sans-serif",size:12},bordercolor:'#334155'},
+  showlegend:true,
+  legend:{font:{size:11},bgcolor:'transparent',bordercolor:'transparent'},
 }, extra);
 const PC = {displayModeBar:false, responsive:true};
+const DARK_GRID = '#1E293B';
+const DARK_LINE = '#334155';
 
 // ── Color constants ──────────────────────────────────────────────────────────
 const SEG_COLORS = {
-  champions:'#14532D', loyal_customers:'#166534', promising:'#4ADE80',
-  potential_loyalists:'#D97706', at_risk:'#EA580C', lost:'#991B1B',
+  champions:'#10B981', loyal_customers:'#06B6D4', promising:'#8B5CF6',
+  potential_loyalists:'#F59E0B', at_risk:'#F97316', lost:'#EF4444',
 };
 const CAMP_COLORS = {
-  loyalty_reward:'#14532D', nurture:'#0EA5E9',
-  second_purchase:'#8B5CF6', winback:'#EA580C', reactivation:'#991B1B',
+  loyalty_reward:'#10B981', nurture:'#06B6D4',
+  second_purchase:'#8B5CF6', winback:'#F97316', reactivation:'#EF4444',
 };
-const TIER_COLORS = {excellent:'#16A34A', good:'#D97706', at_risk:'#EA580C', critical:'#DC2626'};
-const TREND_COLORS = {stable:'#2563EB', declining:'#DC2626', inactive:'#9CA3AF'};
+const TIER_COLORS = {excellent:'#10B981', good:'#F59E0B', at_risk:'#F97316', critical:'#EF4444'};
+const TREND_COLORS = {stable:'#3B82F6', declining:'#EF4444', inactive:'#64748B'};
 
 // ── Map mode config ──────────────────────────────────────────────────────────
 const MODES = {
@@ -704,11 +716,11 @@ function fmt(n, prefix='', suffix='') {
 }
 
 // ── Timestamp ────────────────────────────────────────────────────────────────
-document.getElementById('gen-ts').textContent = 'Updated ' + D.generated;
+document.querySelector('#gen-ts span').textContent = 'Updated ' + D.generated;
 
 // ── Map setup ────────────────────────────────────────────────────────────────
 const map = L.map('map', {zoomControl:true, attributionControl:false}).setView([-15,-52],4);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
   maxZoom:18, subdomains:'abcd'
 }).addTo(map);
 
@@ -716,7 +728,7 @@ fetch('https://raw.githubusercontent.com/codeforgermany/click_that_hood/master/p
   .then(r => r.json())
   .then(gj => {
     L.geoJSON(gj, {
-      style:{color:'#64748B', weight:0.8, fillOpacity:0, opacity:0.4},
+      style:{color:'#475569', weight:0.8, fillOpacity:0, opacity:0.6},
       interactive:false
     }).addTo(map);
   }).catch(()=>{});
@@ -763,12 +775,12 @@ function drawMarkers(mode) {
       <div class="popup-body">
         <div class="popup-row"><span class="popup-label">Customers</span><span class="popup-val">${s.customers.toLocaleString()}</span></div>
         <div class="popup-row"><span class="popup-label">Sellers</span><span class="popup-val">${s.sellers.toLocaleString()}</span></div>
-        <div class="popup-row"><span class="popup-label">Customer / Seller</span><span class="popup-val">${s.customer_per_seller !== null ? s.customer_per_seller+'×' : 'N/A'}</span></div>
-        <div class="popup-row"><span class="popup-label">Avg Delivery</span><span class="popup-val">${s.avg_delivery_days !== null ? s.avg_delivery_days+'d' : 'N/A'}</span></div>
-        <div class="popup-row"><span class="popup-label">Avg Freight</span><span class="popup-val">${s.avg_freight !== null ? 'R$'+s.avg_freight : 'N/A'}</span></div>
-        <div class="popup-row"><span class="popup-label">Late Orders</span><span class="popup-val">${s.late_pct !== null ? s.late_pct+'%' : 'N/A'}</span></div>
-        <div class="popup-row"><span class="popup-label">Seller Health</span><span class="popup-val">${s.avg_health_score !== null ? s.avg_health_score+'/100' : 'N/A'}</span></div>
-        <div class="popup-row"><span class="popup-label">Churn Rate</span><span class="popup-val">${s.churn_rate_pct !== null ? s.churn_rate_pct+'%' : 'N/A'}</span></div>
+        <div class="popup-row"><span class="popup-label">Customer / Seller</span><span class="popup-val">${s.customer_per_seller !== null ? s.customer_per_seller+'×' : '—'}</span></div>
+        <div class="popup-row"><span class="popup-label">Avg Delivery</span><span class="popup-val">${s.avg_delivery_days !== null ? s.avg_delivery_days+'d' : '—'}</span></div>
+        <div class="popup-row"><span class="popup-label">Avg Freight</span><span class="popup-val">${s.avg_freight !== null ? 'R$'+s.avg_freight : '—'}</span></div>
+        <div class="popup-row"><span class="popup-label">Late Orders</span><span class="popup-val">${s.late_pct !== null ? s.late_pct+'%' : '—'}</span></div>
+        <div class="popup-row"><span class="popup-label">Seller Health</span><span class="popup-val">${s.avg_health_score !== null ? s.avg_health_score+'/100' : '—'}</span></div>
+        <div class="popup-row"><span class="popup-label">Churn Rate</span><span class="popup-val">${s.churn_rate_pct !== null ? s.churn_rate_pct+'%' : '—'}</span></div>
       </div>`;
 
     const m = L.circleMarker([s.lat, s.lng], {
@@ -909,54 +921,58 @@ function renderOverview() {
     if (c) countUp(el, c.raw, c.fmt);
   });
 
-  // Monthly chart
+  // Monthly chart — area + line on dark background
   const months = D.monthly.map(m => m.month);
-  const revs = D.monthly.map(m => m.revenue);
-  const maxRev = Math.max(...revs);
+  const revs   = D.monthly.map(m => m.revenue);
   Plotly.newPlot('chart-monthly', [
     {
-      type:'bar', x:months, y:revs, name:'Revenue (R$)',
-      marker:{
-        color:revs.map(v => lerpColor('#BAE6FD','#0284C7', v/maxRev)),
-        opacity:0.9
-      },
+      type:'scatter', fill:'tozeroy',
+      fillcolor:'rgba(6,182,212,0.12)',
+      line:{color:'#06B6D4', width:2.5, shape:'spline'},
+      x:months, y:revs, name:'Revenue (R$)', mode:'lines',
       yaxis:'y',
       hovertemplate:'%{x}<br><b>R$%{y:,.0f}</b><extra></extra>'
     },
     {
-      type:'scatter', mode:'lines+markers', x:months,
-      y:D.monthly.map(m => m.avg_review), name:'Avg Review ★',
-      line:{color:'#16A34A', width:2.5}, marker:{size:5, color:'#16A34A'},
+      type:'scatter', mode:'lines+markers',
+      x:months, y:D.monthly.map(m => m.avg_review), name:'Avg Review ★',
+      line:{color:'#10B981', width:2, shape:'spline'},
+      marker:{size:4, color:'#10B981'},
       yaxis:'y2',
       hovertemplate:'%{x}<br><b>★ %{y:.2f}</b><extra></extra>'
     }
   ], PL({
-    xaxis:{tickangle:-45, tickfont:{size:10}},
-    yaxis:{title:'Revenue (R$)', tickformat:',.0f', titlefont:{size:11}, gridcolor:'#F1F5F9'},
-    yaxis2:{title:'Review Score', overlaying:'y', side:'right', range:[1,5], tickfont:{size:10}, titlefont:{size:11}, showgrid:false},
-    legend:{orientation:'h', y:1.1},
+    xaxis:{tickangle:-45, tickfont:{size:10}, color:DARK_LINE, gridcolor:DARK_GRID, linecolor:DARK_LINE},
+    yaxis:{title:'Revenue (R$)', tickformat:',.0f', titlefont:{size:11}, gridcolor:DARK_GRID, color:DARK_LINE, linecolor:DARK_LINE, zerolinecolor:DARK_GRID},
+    yaxis2:{title:'Review ★', overlaying:'y', side:'right', range:[1,5], tickfont:{size:10}, titlefont:{size:11}, showgrid:false, color:DARK_LINE},
+    legend:{orientation:'h', y:1.1, font:{color:'#F1F5F9'}},
     margin:{l:64,r:56,t:28,b:72},
-    bargap:0.2,
   }), PC);
 }
 
 // ── CUSTOMERS ────────────────────────────────────────────────────────────────
 function renderCustomers() {
-  // RFM
-  const segs = D.rfm.map(r => r.segment.replace(/_/g,' '));
+  // RFM → Treemap
   Plotly.newPlot('chart-rfm', [{
-    type:'bar', orientation:'h',
-    y:segs, x:D.rfm.map(r => r.customers),
-    marker:{color:D.rfm.map(r => SEG_COLORS[r.segment]||'#94A3B8')},
-    text:D.rfm.map(r => r.customers.toLocaleString()),
-    textposition:'outside', textfont:{size:10},
-    hovertemplate:'<b>%{y}</b><br>%{x:,} customers<br>Avg spend: R$%{customdata[0]:,.0f}<br>Avg recency: %{customdata[1]} days<extra></extra>',
-    customdata:D.rfm.map(r => [r.avg_spend, r.avg_recency])
+    type:'treemap',
+    labels: D.rfm.map(r => r.segment.replace(/_/g,' ')),
+    parents: D.rfm.map(() => ''),
+    values: D.rfm.map(r => r.customers),
+    marker:{
+      colors: D.rfm.map(r => SEG_COLORS[r.segment]||'#64748B'),
+      line:{color:'#080D1A', width:2},
+      pad:{t:8,b:8,l:8,r:8},
+    },
+    texttemplate:'<b>%{label}</b><br>%{value:,}',
+    textfont:{size:13, color:'#fff'},
+    hovertemplate:'<b>%{label}</b><br>Customers: %{value:,}<br>Avg spend: R$%{customdata[0]:,.0f}<br>Avg recency: %{customdata[1]:.0f} days<extra></extra>',
+    customdata: D.rfm.map(r => [r.avg_spend, r.avg_recency]),
+    tiling:{packing:'squarify'},
   }], PL({
-    xaxis:{title:'Number of Customers', gridcolor:'#F1F5F9'},
-    yaxis:{autorange:'reversed'},
+    margin:{l:0,r:0,t:0,b:0},
     showlegend:false,
-    margin:{l:140,r:60,t:16,b:48}
+    paper_bgcolor:'#0F172A',
+    plot_bgcolor:'#0F172A',
   }), PC);
 
   // Campaign
@@ -964,48 +980,47 @@ function renderCustomers() {
   Plotly.newPlot('chart-campaign', [{
     type:'bar', orientation:'h',
     y:camps, x:D.campaigns.map(c => c.customers),
-    marker:{color:D.campaigns.map(c => CAMP_COLORS[c.type]||'#94A3B8')},
+    marker:{color:D.campaigns.map(c => CAMP_COLORS[c.type]||'#64748B'), opacity:0.9},
     text:D.campaigns.map(c => c.customers.toLocaleString()),
-    textposition:'outside', textfont:{size:10},
+    textposition:'outside', textfont:{size:10, color:'#F1F5F9'},
     hovertemplate:'<b>%{y}</b><br>%{x:,} customers<br>Avg spend: R$%{customdata:,.0f}<extra></extra>',
     customdata:D.campaigns.map(c => c.avg_spend)
   }], PL({
-    xaxis:{title:'Customers Assigned', gridcolor:'#F1F5F9'},
-    yaxis:{autorange:'reversed'},
+    xaxis:{title:'Customers Assigned', gridcolor:DARK_GRID, color:DARK_LINE, linecolor:DARK_LINE, zerolinecolor:DARK_GRID},
+    yaxis:{autorange:'reversed', color:'#F1F5F9'},
     showlegend:false,
-    margin:{l:120,r:60,t:16,b:48}
+    margin:{l:120,r:70,t:16,b:48}
   }), PC);
 
-  // Cohort heatmap — green scale (intuitive for retention)
+  // Cohort heatmap — dark-adapted blue-cyan scale
   Plotly.newPlot('chart-cohort', [{
     type:'heatmap',
     z:D.cohort.z, x:D.cohort.x, y:D.cohort.y,
-    colorscale:[[0,'#F0FDF4'],[0.25,'#86EFAC'],[0.6,'#22C55E'],[1,'#15803D']],
+    colorscale:[[0,'#0F172A'],[0.2,'#134E4A'],[0.5,'#0891B2'],[1,'#06B6D4']],
     zmin:0, zmax:100,
-    colorbar:{title:'Retention %', len:0.8, thickness:14, tickfont:{size:10}},
+    colorbar:{title:'%', len:0.8, thickness:12, tickfont:{size:10, color:'#F1F5F9'}, titlefont:{color:'#F1F5F9'}},
     hovertemplate:'Cohort: %{y}<br>Month +%{x}: <b>%{z:.1f}%</b><extra></extra>',
     xgap:1, ygap:1
   }], PL({
-    xaxis:{title:'Months Since First Order', tickmode:'linear'},
-    yaxis:{title:'Acquisition Cohort', autorange:'reversed', tickfont:{size:10}},
+    xaxis:{title:'Months Since First Order', tickmode:'linear', color:DARK_LINE, gridcolor:DARK_GRID},
+    yaxis:{title:'Acquisition Cohort', autorange:'reversed', tickfont:{size:10}, color:'#F1F5F9'},
     showlegend:false,
     margin:{l:72,r:60,t:16,b:52}
   }), PC);
 
-  // Category repeat rate — continuous teal color scale
+  // Category repeat rate — dark cyan gradient
   const rates = D.cats.map(c => c.return_rate_pct);
   const rMin = Math.min(...rates), rMax = Math.max(...rates);
-  const catColors = rates.map(r => lerpColor('#BAE6FD','#0284C7', (r-rMin)/(rMax-rMin||1)));
+  const catColors = rates.map(r => lerpColor('#0C4A6E','#06B6D4', (r-rMin)/(rMax-rMin||1)));
   const catAvg = rates.reduce((a,b)=>a+b,0)/rates.length;
 
   Plotly.newPlot('chart-cats', [
     {
       type:'bar', orientation:'h',
-      y:D.cats.map(c => c.category),
-      x:rates,
-      marker:{color:catColors},
+      y:D.cats.map(c => c.category), x:rates,
+      marker:{color:catColors, opacity:0.9},
       text:rates.map(r => r.toFixed(1)+'%'),
-      textposition:'outside', textfont:{size:10},
+      textposition:'outside', textfont:{size:10, color:'#F1F5F9'},
       hovertemplate:'<b>%{y}</b><br>Repeat rate: %{x:.1f}%<br>Cohort: %{customdata:,}<extra></extra>',
       customdata:D.cats.map(c => c.cohort_size)
     },
@@ -1014,21 +1029,20 @@ function renderCustomers() {
       x:[catAvg, catAvg],
       y:[D.cats[D.cats.length-1].category, D.cats[0].category],
       name:'Platform avg',
-      line:{color:'#DC2626', dash:'dot', width:2},
+      line:{color:'#EF4444', dash:'dot', width:2},
       hovertemplate:`Platform avg: ${catAvg.toFixed(1)}%<extra></extra>`
     }
   ], PL({
-    xaxis:{title:'Repeat Purchase Rate (%)', gridcolor:'#F1F5F9'},
-    yaxis:{autorange:'reversed', tickfont:{size:10}},
+    xaxis:{title:'Repeat Purchase Rate (%)', gridcolor:DARK_GRID, color:DARK_LINE, zerolinecolor:DARK_GRID},
+    yaxis:{autorange:'reversed', tickfont:{size:10}, color:'#F1F5F9'},
     annotations:[{
-      x:catAvg, xref:'x',
-      y:D.cats[0].category, yref:'y',
-      text:`avg ${catAvg.toFixed(1)}%`,
-      showarrow:true, arrowhead:2, ax:30, ay:0,
-      font:{color:'#DC2626', size:10}, arrowcolor:'#DC2626'
+      x:catAvg, xref:'x', y:D.cats[0].category, yref:'y',
+      text:`avg ${catAvg.toFixed(1)}%`, showarrow:true,
+      arrowhead:2, ax:30, ay:0,
+      font:{color:'#EF4444', size:10}, arrowcolor:'#EF4444'
     }],
     showlegend:false,
-    margin:{l:170,r:60,t:16,b:48}
+    margin:{l:170,r:70,t:16,b:48}
   }), PC);
 }
 
@@ -1054,7 +1068,7 @@ function renderSellers() {
     if (c) countUp(el, c.raw, c.fmt);
   });
 
-  // Health score histogram — colored by tier
+  // Health score histogram — colored by tier on dark bg
   const binW = 5, numBins = 20;
   const binCounts = new Array(numBins).fill(0);
   scores.forEach(s => {
@@ -1062,64 +1076,77 @@ function renderSellers() {
     binCounts[idx]++;
   });
   const binCenters = Array.from({length:numBins}, (_,i) => i*binW + binW/2);
-  const binColors  = binCenters.map(c => c < 40 ? '#DC2626' : c < 60 ? '#EA580C' : c < 80 ? '#D97706' : '#16A34A');
+  const binColors  = binCenters.map(c => c < 40 ? '#EF4444' : c < 60 ? '#F97316' : c < 80 ? '#F59E0B' : '#10B981');
   const binLabels  = Array.from({length:numBins}, (_,i) => `${i*binW}–${i*binW+binW}`);
 
   Plotly.newPlot('chart-health-dist', [{
     type:'bar',
     x:binCenters, y:binCounts,
     width:binW * 0.88,
-    marker:{color:binColors, opacity:0.9, line:{color:'white', width:0.5}},
+    marker:{color:binColors, opacity:0.9, line:{color:'#080D1A', width:0.5}},
     text:binLabels,
     hovertemplate:'Score %{text}<br><b>%{y} sellers</b><extra></extra>'
   }], PL({
     annotations:[
-      {x:20, y:1, yref:'paper', text:'critical', showarrow:false, font:{size:10, color:'#DC2626'}},
-      {x:50, y:1, yref:'paper', text:'at-risk',  showarrow:false, font:{size:10, color:'#EA580C'}},
-      {x:70, y:1, yref:'paper', text:'good',     showarrow:false, font:{size:10, color:'#D97706'}},
-      {x:90, y:1, yref:'paper', text:'excellent',showarrow:false, font:{size:10, color:'#16A34A'}},
+      {x:20,  y:1, yref:'paper', text:'critical',  showarrow:false, font:{size:10, color:'#EF4444'}},
+      {x:50,  y:1, yref:'paper', text:'at-risk',   showarrow:false, font:{size:10, color:'#F97316'}},
+      {x:70,  y:1, yref:'paper', text:'good',      showarrow:false, font:{size:10, color:'#F59E0B'}},
+      {x:90,  y:1, yref:'paper', text:'excellent', showarrow:false, font:{size:10, color:'#10B981'}},
     ],
     shapes:[40,60,80].map((t,i) => ({
       type:'line', x0:t, x1:t, y0:0, y1:1, yref:'paper',
-      line:{color:['#DC2626','#EA580C','#16A34A'][i], dash:'dash', width:1.5}
+      line:{color:['#EF4444','#F97316','#10B981'][i], dash:'dash', width:1.5}
     })),
-    xaxis:{title:'Health Score (0–100)', range:[0,100], gridcolor:'#F1F5F9'},
-    yaxis:{title:'Number of Sellers', gridcolor:'#F1F5F9'},
+    xaxis:{title:'Health Score (0–100)', range:[0,100], gridcolor:DARK_GRID, color:DARK_LINE, linecolor:DARK_LINE, zerolinecolor:DARK_GRID},
+    yaxis:{title:'Number of Sellers', gridcolor:DARK_GRID, color:DARK_LINE},
     showlegend:false, margin:{l:56,r:16,t:36,b:48}
   }), PC);
 
-  // Tier bar
+  // Tier donut
   const tierOrder = ['excellent','good','at_risk','critical'];
   const tierCounts = {};
   D.health_summary.forEach(r => { tierCounts[r.tier] = (tierCounts[r.tier]||0) + r.sellers; });
+  const tierTotal = tierOrder.reduce((s,t) => s+(tierCounts[t]||0), 0);
   Plotly.newPlot('chart-tier', [{
-    type:'bar',
-    x:tierOrder.map(t => t.replace('_',' ')),
-    y:tierOrder.map(t => tierCounts[t]||0),
-    marker:{color:tierOrder.map(t => TIER_COLORS[t]), opacity:0.9},
-    text:tierOrder.map(t => (tierCounts[t]||0).toLocaleString()),
-    textposition:'outside', textfont:{size:11},
-    hovertemplate:'%{x}<br><b>%{y:,} sellers</b><extra></extra>'
+    type:'pie', hole:0.65,
+    labels: tierOrder.map(t => t.replace('_',' ')),
+    values: tierOrder.map(t => tierCounts[t]||0),
+    marker:{colors:tierOrder.map(t=>TIER_COLORS[t]), line:{color:'#080D1A', width:2}},
+    textinfo:'percent',
+    textfont:{size:11, color:'#fff'},
+    hovertemplate:'<b>%{label}</b><br>%{value:,} sellers<br>%{percent}<extra></extra>',
+    sort:false,
   }], PL({
-    xaxis:{title:''}, yaxis:{title:'Sellers', gridcolor:'#F1F5F9'},
-    showlegend:false, bargap:0.35, margin:{l:48,r:16,t:28,b:36}
+    annotations:[{
+      text:`<b>${tierTotal.toLocaleString()}</b><br><span style="font-size:9px">sellers</span>`,
+      showarrow:false, font:{size:13, color:'#F1F5F9'}, x:0.5, y:0.5
+    }],
+    showlegend:true,
+    legend:{orientation:'v', x:1.02, y:0.5, font:{size:11, color:'#F1F5F9'}},
+    margin:{l:0,r:90,t:16,b:16},
   }), PC);
 
-  // Trend bar
+  // Trend donut
   const trendOrder = ['stable','declining','inactive'];
   const trendCounts = {};
   D.health_summary.forEach(r => { trendCounts[r.trend] = (trendCounts[r.trend]||0) + r.sellers; });
   Plotly.newPlot('chart-trend', [{
-    type:'bar',
-    x:trendOrder,
-    y:trendOrder.map(t => trendCounts[t]||0),
-    marker:{color:trendOrder.map(t => TREND_COLORS[t]), opacity:0.9},
-    text:trendOrder.map(t => (trendCounts[t]||0).toLocaleString()),
-    textposition:'outside', textfont:{size:11},
-    hovertemplate:'%{x}<br><b>%{y:,} sellers</b><extra></extra>'
+    type:'pie', hole:0.65,
+    labels: trendOrder,
+    values: trendOrder.map(t => trendCounts[t]||0),
+    marker:{colors:trendOrder.map(t=>TREND_COLORS[t]), line:{color:'#080D1A', width:2}},
+    textinfo:'percent',
+    textfont:{size:11, color:'#fff'},
+    hovertemplate:'<b>%{label}</b><br>%{value:,} sellers<br>%{percent}<extra></extra>',
+    sort:false,
   }], PL({
-    xaxis:{title:''}, yaxis:{title:'Sellers', gridcolor:'#F1F5F9'},
-    showlegend:false, bargap:0.35, margin:{l:48,r:16,t:28,b:36}
+    annotations:[{
+      text:`<b>${total.toLocaleString()}</b><br><span style="font-size:9px">sellers</span>`,
+      showarrow:false, font:{size:13, color:'#F1F5F9'}, x:0.5, y:0.5
+    }],
+    showlegend:true,
+    legend:{orientation:'v', x:1.02, y:0.5, font:{size:11, color:'#F1F5F9'}},
+    margin:{l:0,r:90,t:16,b:16},
   }), PC);
 
   // Table filter buttons

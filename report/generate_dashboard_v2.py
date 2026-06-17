@@ -347,12 +347,12 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 .hdr-meta strong{color:var(--text2)}
 
 /* LAYOUT */
-#app{display:flex;height:100vh;padding-top:60px}
+#app{position:relative}
 
 /* SIDE NAV */
 #side-nav{
-  width:180px;flex-shrink:0;background:#fff;
-  border-right:1px solid var(--border);
+  position:fixed;top:60px;left:0;bottom:0;width:180px;z-index:100;
+  background:#fff;border-right:1px solid var(--border);
   padding:20px 10px;display:flex;flex-direction:column;gap:3px;overflow-y:auto;
 }
 .nav-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);padding:8px 12px 4px}
@@ -383,7 +383,8 @@ body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--t
 
 /* SCROLL MAIN */
 #scroll-main{
-  flex:1;overflow-y:auto;padding:28px 28px 60px;scroll-behavior:smooth;
+  position:fixed;top:60px;left:180px;right:0;bottom:0;
+  overflow-y:auto;padding:28px 32px 60px;scroll-behavior:smooth;
 }
 #scroll-main::-webkit-scrollbar{width:5px}
 #scroll-main::-webkit-scrollbar-track{background:transparent}
@@ -527,7 +528,7 @@ section{margin-bottom:40px;scroll-margin-top:16px}
       <div class="kpi3" id="kpi-bot"></div>
       <div class="card">
         <div class="card-title">Monthly Revenue &amp; Avg Review Score — drag the slider to zoom a time range</div>
-        <div id="chart-monthly" style="height:300px"></div>
+        <div id="chart-monthly" style="height:340px"></div>
       </div>
     </section>
 
@@ -567,21 +568,21 @@ section{margin-bottom:40px;scroll-margin-top:16px}
       <div class="g2">
         <div class="card">
           <div class="card-title">RFM Segments — Recency vs Avg Spend (bubble size = customers)</div>
-          <div id="chart-rfm" style="height:320px"></div>
+          <div id="chart-rfm" style="height:420px"></div>
         </div>
         <div class="card">
           <div class="card-title">Cohort Retention — % of customers still active at month N</div>
-          <div id="chart-cohort" style="height:320px"></div>
+          <div id="chart-cohort" style="height:420px"></div>
         </div>
       </div>
       <div class="g2" style="margin-top:14px">
         <div class="card">
           <div class="card-title">Campaign Targets by Action Type</div>
-          <div id="chart-campaign" style="height:260px"></div>
+          <div id="chart-campaign" style="height:340px"></div>
         </div>
         <div class="card">
           <div class="card-title">Repeat Purchase Rate by First-Order Category</div>
-          <div id="chart-cats" style="height:260px"></div>
+          <div id="chart-cats" style="height:340px"></div>
         </div>
       </div>
     </section>
@@ -595,16 +596,16 @@ section{margin-bottom:40px;scroll-margin-top:16px}
       <div class="g2-wide" style="margin-bottom:14px">
         <div class="card">
           <div class="card-title">Health Score Distribution — drag to select a score range and filter the table below</div>
-          <div id="chart-hist" style="height:230px"></div>
+          <div id="chart-hist" style="height:280px"></div>
         </div>
         <div>
           <div class="card" style="margin-bottom:14px">
             <div class="card-title">By Health Tier</div>
-            <div id="chart-tier" style="height:130px"></div>
+            <div id="chart-tier" style="height:160px"></div>
           </div>
           <div class="card">
             <div class="card-title">By Trend Status</div>
-            <div id="chart-trend" style="height:130px"></div>
+            <div id="chart-trend" style="height:160px"></div>
           </div>
         </div>
       </div>

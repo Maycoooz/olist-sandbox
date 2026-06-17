@@ -567,7 +567,7 @@ section{margin-bottom:40px;scroll-margin-top:16px}
       </div>
       <div class="g2">
         <div class="card">
-          <div class="card-title">RFM Segments — Recency vs Avg Spend (bubble size = customers)</div>
+          <div class="card-title">RFM Segments — Customer Count by Segment</div>
           <div id="chart-rfm" style="height:420px"></div>
         </div>
         <div class="card">
@@ -823,28 +823,24 @@ function initGeo(){
 function initCustomers(){
   // RFM bubble
   const rfmCh=ec('chart-rfm');
-  const maxC=Math.max(...D.rfm.map(r=>r.customers));
+  const rfmData=[...D.rfm].sort((a,b)=>a.customers-b.customers);
   rfmCh.setOption({
-    tooltip:{trigger:'item',formatter:p=>{
-      const r=D.rfm[p.dataIndex];
-      return '<b>'+r.segment.replace(/_/g,' ')+'</b><br>Customers: '+r.customers.toLocaleString()+'<br>Avg Recency: '+r.avg_recency+' days<br>Avg Spend: R$'+r.avg_spend.toFixed(2);
-    }},
-    grid:{left:60,right:20,top:30,bottom:50},
-    xAxis:{type:'value',name:'Avg Recency (days)',nameLocation:'middle',nameGap:28,
-      nameTextStyle:{fontSize:10,color:'#94A3B8'},
-      axisLabel:{fontSize:10,color:'#94A3B8'},splitLine:{lineStyle:{color:'#F1F5F9'}}},
-    yAxis:{type:'value',name:'Avg Spend (R$)',nameLocation:'middle',nameGap:50,
-      nameTextStyle:{fontSize:10,color:'#94A3B8'},
-      axisLabel:{fontSize:10,color:'#94A3B8',formatter:v=>'R$'+v},
+    tooltip:{trigger:'axis',axisPointer:{type:'none'},
+      formatter:ps=>{
+        const r=D.rfm.find(r=>r.segment.replace(/_/g,' ')===ps[0].name);
+        return '<b>'+ps[0].name+'</b><br>Customers: <b>'+ps[0].value.toLocaleString()+'</b>'+(r?'<br>Avg Spend: R$'+r.avg_spend.toFixed(2)+'<br>Avg Recency: '+r.avg_recency+' days':'');
+      }},
+    grid:{left:160,right:70,top:12,bottom:48},
+    xAxis:{type:'value',
+      name:'Customers',nameLocation:'middle',nameGap:28,
+      nameTextStyle:{fontSize:11,color:'#94A3B8'},
+      axisLabel:{fontSize:10,color:'#94A3B8',formatter:v=>v>=1000?(v/1000).toFixed(0)+'K':v},
       splitLine:{lineStyle:{color:'#F1F5F9'}}},
-    series:[{
-      type:'scatter',
-      data:D.rfm.map(r=>[r.avg_recency,r.avg_spend,r.customers,r.segment]),
-      symbolSize:d=>18+(d[2]/maxC)*56,
-      itemStyle:{color:d=>SEG_CLR[d.data[3]]||'#64748B',opacity:.82,borderColor:'#fff',borderWidth:1.5},
-      label:{show:true,fontSize:10,fontWeight:600,color:'#334155',position:'top',
-        formatter:p=>p.data[3].replace(/_/g,' ').split(' ').map(w=>w[0].toUpperCase()+w.slice(1)).join('\n')}
-    }]
+    yAxis:{type:'category',data:rfmData.map(r=>r.segment.replace(/_/g,' ')),
+      axisLabel:{fontSize:11,color:'#334155',fontWeight:500}},
+    series:[{type:'bar',barMaxWidth:32,
+      data:rfmData.map(r=>({value:r.customers,itemStyle:{color:SEG_CLR[r.segment]||'#94A3B8',borderRadius:[0,4,4,0]}})),
+      label:{show:true,position:'right',formatter:p=>p.value.toLocaleString(),fontSize:10,color:'#64748B'}}]
   });
   window.addEventListener('resize',()=>rfmCh.resize());
 
@@ -870,8 +866,12 @@ function initCustomers(){
   campCh.setOption({
     tooltip:{trigger:'axis',axisPointer:{type:'none'},
       formatter:ps=>'<b>'+ps[0].name+'</b><br>'+ps[0].value.toLocaleString()+' customers<br>Avg spend: R$'+(campData.find(c=>c.type.replace(/_/g,' ')===ps[0].name)?.avg_spend.toFixed(2)||'—')},
-    grid:{left:130,right:60,top:12,bottom:30},
-    xAxis:{type:'value',axisLabel:{fontSize:10,color:'#94A3B8'},splitLine:{lineStyle:{color:'#F1F5F9'}}},
+    grid:{left:130,right:60,top:12,bottom:48},
+    xAxis:{type:'value',
+      name:'Customers Assigned',nameLocation:'middle',nameGap:28,
+      nameTextStyle:{fontSize:11,color:'#94A3B8'},
+      axisLabel:{fontSize:10,color:'#94A3B8',formatter:v=>v>=1000?(v/1000).toFixed(0)+'K':v},
+      splitLine:{lineStyle:{color:'#F1F5F9'}}},
     yAxis:{type:'category',data:campData.map(c=>c.type.replace(/_/g,' ')),axisLabel:{fontSize:11,color:'#334155',fontWeight:500}},
     series:[{type:'bar',barMaxWidth:28,
       data:campData.map(c=>({value:c.customers,itemStyle:{color:CAMP_CLR[c.type]||'#94A3B8',borderRadius:[0,4,4,0]}})),
